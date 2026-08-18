@@ -1,8 +1,9 @@
 """Generate the DA1 diagrams for the Warehouse & Supply Chain Management System.
 
-Ten PNGs:
-  er_model      - basic ER model (Chen notation), 7 entities
+Eleven PNGs:
+  er_model      - basic ER model (Chen notation), 9 entities
   eer_model     - the SAME model extended with EER features
+  eer_aggregation - the aggregation on its own, so the box stays readable
   sample_data   - sample rows used to work out the functional dependencies
   norm_unf      - the single unnormalized table we start from
   norm_1nf      - relations after 1NF
@@ -324,15 +325,17 @@ ORDER_DRIVER = dict(
 
 # ================================================================ 1. ER MODEL
 def er_model():
-    fig, ax = canvas(23.2, 13.6, y0=0.6)
+    fig, ax = canvas(24.8, 14.4, y0=0.5)
 
     TOP, MID, BOT = 9.4, 6.5, 3.6
 
-    for n, x, y in [("SUPPLIER", 2.3, TOP), ("PRODUCT", 8.2, TOP),
-                    ("WAREHOUSE", 14.3, TOP), ("EMPLOYEE", 20.9, TOP),
-                    ("CUSTOMER", 2.3, BOT), ("ORDERS", 8.2, BOT),
-                    ("SHIPMENT", 14.3, BOT)]:
-        entity(ax, x, y, n)
+    for n, x, y, w in [("SUPPLIER", 2.3, TOP, 2.6), ("PRODUCT", 8.2, TOP, 2.6),
+                       ("WAREHOUSE", 14.3, TOP, 2.6), ("EMPLOYEE", 20.9, TOP, 2.6),
+                       ("CUSTOMER", 2.3, BOT, 2.6), ("ORDERS", 8.2, BOT, 2.6),
+                       ("SHIPMENT", 14.3, BOT, 2.6),
+                       ("GOODS_RETURN", 20.9, BOT, 3.2),
+                       ("INSPECTION", 4.0, 6.2, 2.8)]:
+        entity(ax, x, y, n, w=w)
 
     # horizontal relationships
     rel(ax, 5.25, TOP, "SUPPLIES")
@@ -355,9 +358,33 @@ def er_model():
     rel(ax, 8.2, MID, "CONTAINS")
     line(ax, (8.2, TOP - 0.48), (8.2, MID + 0.58), "N")
     line(ax, (8.2, MID - 0.58), (8.2, BOT + 0.48), "M", total=True)
-    rel(ax, 14.3, MID, "DISPATCHED\nFROM", fs=7.6)
+    rel(ax, 14.3, MID, "DISPATCHED_FROM", w=3.2, fs=7.4)
     line(ax, (14.3, TOP - 0.48), (14.3, MID + 0.58), "1")
     line(ax, (14.3, MID - 0.58), (14.3, BOT + 0.48), "N", total=True)
+
+    # the 1:1 relationship, drawn below the pair it joins
+    rel(ax, 18.6, 8.1, "MANAGES", w=2.6, h=1.1)
+    line(ax, (15.4, TOP - 0.48), (17.3, 8.1), "1", total=True)
+    line(ax, (19.9, 8.1), (20.4, TOP - 0.48), "1")
+
+    # INSPECTION needs one relationship per participant, which is what the
+    # aggregation in the EER model replaces with a single link
+    rel(ax, 2.3, 7.9, "CHECKS_SUPPLIER", w=3.3, h=1.05, fs=7.2)
+    line(ax, (2.3, TOP - 0.48), (2.3, 8.43), "1")
+    line(ax, (2.3, 7.37), (3.1, 6.68), "N", total=True)
+    rel(ax, 6.5, 7.9, "CHECKS_PRODUCT", w=3.0, h=1.05, fs=7.2)
+    line(ax, (7.4, TOP - 0.48), (6.5, 8.43), "1")
+    line(ax, (6.5, 7.37), (4.9, 6.68), "N", total=True)
+
+    # returns: one link to the order, one to the warehouse taking them back
+    rel(ax, 16.6, 4.75, "RETURNED_FOR", w=2.8, h=1.0, fs=7.4)
+    line(ax, (8.9, BOT + 0.48), (8.9, 4.75), "1")
+    line(ax, (8.9, 4.75), (15.2, 4.75))
+    line(ax, (18.0, 4.75), (19.6, 4.75))
+    line(ax, (19.6, 4.75), (19.6, BOT + 0.48), "N", total=True)
+    rel(ax, 17.6, 6.4, "RETURNED_TO", w=2.6, h=1.05, fs=7.4)
+    line(ax, (15.2, TOP - 0.48), (17.6, 6.93), "1")
+    line(ax, (17.6, 5.87), (21.6, BOT + 0.48), "N", total=True)
 
     # attributes on relationships
     attr(ax, 5.25, TOP + 1.55, "LeadTimeDays")
@@ -392,21 +419,28 @@ def er_model():
                    ("Status", {}), ("TotalAmt", {})], up=False)
     fan(14.3, BOT, [("ShipmentID", {"key": True}), ("DispatchDate", {}),
                     ("DeliveryDate", {}), ("Status", {})], up=False)
+    fan(20.9, BOT, [("ReturnID", {"key": True}), ("ReturnDate", {}),
+                    ("Reason", {}), ("RefundAmt", {})], up=False)
+
+    for xx, t, kw in [(1.9, "InspID", {"key": True}), (4.0, "Result", {}),
+                      (6.1, "InspDate", {})]:
+        attr(ax, xx, 4.9, t, **kw)
+        line(ax, (xx, 5.21), (4.0, 5.725), lw=0.8, color=GREY)
 
     save(fig, "er_model")
 
 
 # =============================================================== 2. EER MODEL
 def eer_model():
-    fig, ax = canvas(27.0, 15.2, y0=-0.6)
+    fig, ax = canvas(27.0, 16.6, y0=-1.9)
 
     TOP, MID, BOT = 9.8, 6.5, 3.4
 
     for n, x, y in [("SUPPLIER", 2.3, TOP), ("PRODUCT", 8.2, TOP),
                     ("WAREHOUSE", 14.3, TOP), ("EMPLOYEE", 20.9, TOP),
-                    ("CUSTOMER", 2.3, BOT), ("SHIPMENT", 14.3, BOT),
-                    ("ORDERS", 8.2, BOT)]:
+                    ("CUSTOMER", 2.3, BOT), ("ORDERS", 8.2, BOT)]:
         entity(ax, x, y, n)
+    entity(ax, 14.3, BOT, "GOODS_MOVEMENT", w=3.4, shaded=True)
 
     rel(ax, 5.25, TOP, "SUPPLIES")
     line(ax, (3.6, TOP), (4.0, TOP), "M")
@@ -420,12 +454,33 @@ def eer_model():
     rel(ax, 5.25, BOT, "PLACES")
     line(ax, (3.6, BOT), (4.0, BOT), "1")
     line(ax, (6.5, BOT), (6.9, BOT), "N", total=True)
-    rel(ax, 11.25, BOT, "SHIPPED_BY")
-    line(ax, (9.5, BOT), (10.0, BOT), "1")
-    line(ax, (12.5, BOT), (13.0, BOT), "N", total=True)
-    rel(ax, 14.3, MID, "DISPATCHED\nFROM", fs=7.6)
+    rel(ax, 11.05, BOT, "MOVEMENT_FOR", w=2.6, h=1.15, fs=7.4, shaded=True)
+    line(ax, (9.5, BOT), (9.75, BOT), "1")
+    line(ax, (12.35, BOT), (12.6, BOT), "N", total=True)
+    rel(ax, 14.3, MID, "HANDLED_AT", fs=7.8, shaded=True)
     line(ax, (14.3, TOP - 0.48), (14.3, MID + 0.58), "1")
-    line(ax, (14.3, MID - 0.58), (14.3, BOT + 0.48), "N", total=True)
+    line(ax, (14.3, MID - 0.58), (14.3, BOT + 0.475), "N", total=True)
+
+    # ---- added: generalization, two movement types lifted into one superclass
+    ax.add_patch(Circle((14.3, 2.0), 0.31, fc=SHADE, ec=INK, lw=1.2, zorder=4))
+    ax.text(14.3, 2.0, "d", ha="center", va="center", fontsize=10.5,
+            weight="bold", color=INK, zorder=5)
+    line(ax, (14.3, BOT - 0.475), (14.3, 2.31), total=True)
+    entity(ax, 11.7, 0.6, "SHIPMENT", w=2.7, h=0.88, shaded=True)
+    entity(ax, 17.0, 0.6, "GOODS_RETURN", w=3.2, h=0.88, shaded=True)
+    line(ax, (14.09, 1.79), (11.7, 1.04))
+    line(ax, (14.51, 1.79), (17.0, 1.04))
+    attr(ax, 10.6, -0.9, "DeliveryDate", shaded=True)
+    line(ax, (10.6, -0.59), (11.7, 0.16), lw=0.8, color=GREY)
+    attr(ax, 15.6, -0.9, "Reason", shaded=True)
+    line(ax, (15.6, -0.59), (16.5, 0.16), lw=0.8, color=GREY)
+    attr(ax, 18.4, -0.9, "RefundAmt", shaded=True)
+    line(ax, (18.4, -0.59), (17.5, 0.16), lw=0.8, color=GREY)
+
+    # ---- added: the 1:1 relationship, joined to the MANAGER subclass
+    rel(ax, 16.5, 8.0, "MANAGES", w=2.4, h=1.05, shaded=True)
+    line(ax, (15.3, TOP - 0.475), (16.5, 8.525), "1", total=True)
+    line(ax, (16.5, 7.475), (18.3, 6.69), "1")
 
     # ---- added 1: the M:N CONTAINS becomes a weak entity ORDER_ITEM
     rel(ax, 8.2, 8.2, "FOR", w=2.0, h=1.0, shaded=True)
@@ -513,17 +568,53 @@ def eer_model():
         attr(ax, xx, yy, t, **kw)
         line(ax, (xx, yy + 0.31), (8.2, BOT - 0.48), lw=0.8, color=GREY)
 
-    for xx, yy, t, kw in [(13.15, 2.25, "ShipmentID", {"key": True}),
-                          (15.45, 2.25, "Status", {}),
-                          (13.15, 1.20, "DispatchDate", {}),
-                          (15.45, 1.20, "DeliveryDate", {})]:
+    for xx, yy, t, kw in [(18.35, 4.05, "MovementID", {"key": True,
+                                                       "shaded": True}),
+                          (18.35, 3.25, "MoveDate", {"shaded": True}),
+                          (18.35, 2.45, "Status", {"shaded": True})]:
         attr(ax, xx, yy, t, **kw)
-        line(ax, (xx, yy + 0.31), (14.3, BOT - 0.48), lw=0.8, color=GREY)
+        line(ax, (xx - 0.9, yy), (16.0, BOT), lw=0.8, color=GREY)
 
     save(fig, "eer_model")
 
 
-# ====================================================== 3. SAMPLE DATA FOR FDs
+# ========================================================= 3. AGGREGATION
+def eer_aggregation():
+    fig, ax = canvas(14.0, 10.4, y0=0.4)
+
+    entity(ax, 2.7, 7.0, "SUPPLIER", w=2.8)
+    rel(ax, 6.6, 7.0, "SUPPLIES", w=2.6, h=1.15)
+    entity(ax, 10.5, 7.0, "PRODUCT", w=2.8)
+    line(ax, (4.1, 7.0), (5.3, 7.0), "M")
+    line(ax, (7.9, 7.0), (9.1, 7.0), "N")
+
+    attr(ax, 2.7, 8.7, "SupplierID", key=True)
+    line(ax, (2.7, 8.39), (2.7, 7.48), lw=0.8, color=GREY)
+    attr(ax, 10.5, 8.7, "ProductID", key=True)
+    line(ax, (10.5, 8.39), (10.5, 7.48), lw=0.8, color=GREY)
+    attr(ax, 6.6, 8.7, "LeadTimeDays")
+    line(ax, (6.6, 8.39), (6.6, 7.58), lw=0.8, color=GREY)
+
+    # the aggregation itself: the whole triangle treated as one object
+    ax.add_patch(Rectangle((0.9, 6.25), 11.2, 3.05, fc="none", ec=INK, lw=1.5,
+                           zorder=2))
+
+    rel(ax, 6.6, 4.5, "INSPECTED_IN", w=3.0, h=1.15, fs=7.8)
+    line(ax, (6.6, 6.25), (6.6, 5.08), "1")
+    entity(ax, 6.6, 2.6, "INSPECTION", w=3.0)
+    line(ax, (6.6, 3.92), (6.6, 3.08), "N", total=True)
+
+    attr(ax, 3.5, 1.2, "InspID", key=True)
+    line(ax, (3.5, 1.51), (6.6, 2.12), lw=0.8, color=GREY)
+    attr(ax, 6.6, 1.2, "InspDate")
+    line(ax, (6.6, 1.51), (6.6, 2.12), lw=0.8, color=GREY)
+    attr(ax, 9.7, 1.2, "Result")
+    line(ax, (9.7, 1.51), (6.6, 2.12), lw=0.8, color=GREY)
+
+    save(fig, "eer_aggregation")
+
+
+# ====================================================== 4. SAMPLE DATA FOR FDs
 def sample_data():
     fig, ax = canvas(20.0, 9.6, y0=1.0)
 
@@ -536,7 +627,7 @@ def sample_data():
     save(fig, "sample_data")
 
 
-# ============================================================ 4. UNF
+# ============================================================ 5. UNF
 def norm_unf():
     fig, ax = canvas(21.0, 6.0, y0=1.6)
 
@@ -562,7 +653,7 @@ def norm_unf():
     save(fig, "norm_unf")
 
 
-# ============================================================ 5. 1NF
+# ============================================================ 6. 1NF
 def norm_1nf():
     fig, ax = canvas(21.0, 11.0, y0=0.4)
     b = row_of(ax, 10.6, [ORDER_MASTER, DELIVERY_DUTY, SUPPLIER_PHONE])
@@ -570,7 +661,7 @@ def norm_1nf():
     save(fig, "norm_1nf")
 
 
-# ============================================================ 6. 2NF
+# ============================================================ 7. 2NF
 def norm_2nf():
     fig, ax = canvas(21.0, 11.0, y0=0.4)
     b = row_of(ax, 10.6, [ORDER_MASTER, DELIVERY_DUTY, SUPPLIER_PHONE])
@@ -578,7 +669,7 @@ def norm_2nf():
     save(fig, "norm_2nf")
 
 
-# ============================================================ 7. 3NF
+# ============================================================ 8. 3NF
 def norm_3nf():
     fig, ax = canvas(21.0, 11.6, y0=0.4)
     b = row_of(ax, 11.2, [ORDERS, CUSTOMER, CITY, DELIVERY_DUTY])
@@ -586,7 +677,7 @@ def norm_3nf():
     save(fig, "norm_3nf")
 
 
-# ============================================================ 8. BCNF
+# ============================================================ 9. BCNF
 def norm_bcnf():
     fig, ax = canvas(21.0, 11.6, y0=0.4)
     b = row_of(ax, 11.2, [ORDERS, CUSTOMER, CITY, DRIVER_CITY])
@@ -594,7 +685,7 @@ def norm_bcnf():
     save(fig, "norm_bcnf")
 
 
-# ================================================= 9. DECOMPOSITION TREE
+# ================================================ 10. DECOMPOSITION TREE
 # (name, columns, parent name in the previous stage, key)
 TREE = [
     ("UNF", [
@@ -716,18 +807,22 @@ def decomp_tree():
     save(fig, "decomp_tree")
 
 
-# ============================================================ 10. FINAL SCHEMA
+# =========================================================== 11. FINAL SCHEMA
 def final_schema():
     fig, ax = canvas(20.4, 11.4, y0=1.2)
 
     groups = [
-        ("Master data", [
+        ("Master data and supply", [
             ("CITY", ["City", "State"], (0,), ()),
             ("SUPPLIER", ["SupplierID", "SName", "City"], (0,), (2,)),
             ("SUPPLIER_PHONE", ["SupplierID", "Phone"], (0, 1), (0,)),
             ("PRODUCT", ["ProductID", "PName", "Category", "UnitPrice"], (0,), ()),
             ("PERISHABLE_PRODUCT", ["ProductID", "ShelfLifeDays", "StorageTempC"],
              (0,), (0,)),
+            ("SUPPLIES", ["SupplierID", "ProductID", "LeadTimeDays", "SupplyPrice"],
+             (0, 1), (0, 1)),
+            ("INSPECTION", ["InspID", "SupplierID", "ProductID", "InspDate",
+                            "Result"], (0,), (1, 2)),
         ]),
         ("Warehouse and staff", [
             ("WAREHOUSE", ["WarehouseID", "WName", "City", "Capacity", "ManagerID"],
@@ -737,18 +832,19 @@ def final_schema():
             ("MANAGER", ["EmpID", "Level", "Bonus"], (0,), (0,)),
             ("DRIVER", ["EmpID", "LicenseNo", "Expiry"], (0,), (0,)),
             ("DRIVER_CITY", ["DriverID", "City"], (0,), (0, 1)),
-        ]),
-        ("Stock and orders", [
-            ("SUPPLIES", ["SupplierID", "ProductID", "LeadTimeDays", "SupplyPrice"],
-             (0, 1), (0, 1)),
             ("STOCK", ["WarehouseID", "ProductID", "Quantity"], (0, 1), (0, 1)),
+        ]),
+        ("Orders and movements", [
             ("CUSTOMER", ["CustID", "CName", "Street", "City", "Phone"], (0,), (3,)),
             ("ORDERS", ["OrderID", "OrderDate", "Status", "CustID"], (0,), (3,)),
             ("ORDER_ITEM", ["OrderID", "ItemNo", "ProductID", "Qty"], (0, 1),
              (0, 2)),
             ("ORDER_DRIVER", ["OrderID", "DriverID"], (0, 1), (0, 1)),
-            ("SHIPMENT", ["ShipmentID", "OrderID", "WarehouseID", "DispatchDate",
-                          "DeliveryDate"], (0,), (1, 2)),
+            ("GOODS_MOVEMENT", ["MovementID", "OrderID", "MoveDate", "Status"],
+             (0,), (1,)),
+            ("SHIPMENT", ["MovementID", "WarehouseID", "DeliveryDate"], (0,),
+             (0, 1)),
+            ("GOODS_RETURN", ["MovementID", "Reason", "RefundAmt"], (0,), (0,)),
         ]),
     ]
 
@@ -782,8 +878,8 @@ def final_schema():
     save(fig, "final_schema")
 
 
-FIGURES = [er_model, eer_model, sample_data, norm_unf, norm_1nf, norm_2nf,
-           norm_3nf, norm_bcnf, decomp_tree, final_schema]
+FIGURES = [er_model, eer_model, eer_aggregation, sample_data, norm_unf,
+           norm_1nf, norm_2nf, norm_3nf, norm_bcnf, decomp_tree, final_schema]
 NAMES = [f.__name__ for f in FIGURES]
 
 if __name__ == "__main__":
