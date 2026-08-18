@@ -84,9 +84,12 @@ EER_ADDED = [
     ("Specialization\n(total, disjoint)", "EMPLOYEE to\nMANAGER, DRIVER",
      "Every employee is exactly one of the two, never both and never neither. "
      "A manager has Level and Bonus, a driver has LicenseNo and Expiry."),
-    ("Specialization\n(partial)", "PRODUCT to\nPERISHABLE_PRODUCT",
-     "Only some products are perishable. Only those need ShelfLifeDays and "
-     "StorageTempC, so the rest are not forced to store empty columns."),
+    ("Specialization\n(partial, overlapping)",
+     "PRODUCT to\nPERISHABLE_PRODUCT,\nHAZARDOUS_PRODUCT",
+     "Only some products are perishable and only some are hazardous, so the "
+     "specialization is partial: a plain product joins neither subclass. It is also "
+     "overlapping, because a product can be both, a vaccine being the obvious case. "
+     "That is what the o circle here says and the d circles elsewhere deny."),
     ("Multivalued attribute", "SUPPLIER.Phone",
      "One supplier can have several phone numbers."),
     ("Composite attribute", "CUSTOMER.Address",
@@ -142,6 +145,7 @@ SCHEMA = [
     ("SUPPLIER_PHONE", "SupplierID + Phone", "SupplierID"),
     ("PRODUCT", "ProductID", "none"),
     ("PERISHABLE_PRODUCT", "ProductID", "ProductID"),
+    ("HAZARDOUS_PRODUCT", "ProductID", "ProductID"),
     ("SUPPLIES", "SupplierID + ProductID", "SupplierID, ProductID"),
     ("INSPECTION", "InspID", "SupplierID + ProductID (to SUPPLIES)"),
     ("WAREHOUSE", "WarehouseID", "City, ManagerID (UNIQUE)"),
@@ -539,20 +543,35 @@ def build_docx():
          "them. The two produce the same shape on paper and map to tables the same "
          "way, but they are arrived at from opposite ends.")
     figure("eer_model.png", "Figure 2. The same model, extended with EER features")
-    para("Five pieces of notation appear in Figure 2 that Figure 1 does not need. A "
+    para("Figure 2 uses several pieces of notation that Figure 1 does not need. A "
          "double ellipse is a multivalued attribute, so SUPPLIER.Phone is drawn that "
          "way. A composite attribute is drawn as an ellipse with its parts hanging "
          "below it, which is how CUSTOMER.Address carries Street, City and Pincode. "
-         "A dashed ellipse is a derived attribute, used for ORDERS.TotalAmt. A circle "
-         "marked 'd' on a specialization means the subclasses are disjoint, and the "
-         "line running into that circle is doubled when the specialization is total: "
-         "EMPLOYEE has a double line because every employee is a manager or a "
-         "driver, while PRODUCT has a single line because most products are not "
-         "perishable. A weak entity has a double border and reaches its owner "
+         "A dashed ellipse is a derived attribute, used for ORDERS.TotalAmt. A "
+         "rectangle drawn around a whole relationship marks an aggregation, which "
+         "section 5.2 covers. A weak entity has a double border and reaches its owner "
          "through a double diamond, which is why ORDER_ITEM and HAS are drawn that "
          "way. The generalization at the foot of the figure uses the same circle "
          "and double line as a specialization, because on paper the two constructs "
          "cannot be told apart.")
+    para("Each of the three hierarchies carries three marks, and every mark answers "
+         "a different question:")
+    bullets([
+        "The letter in the circle says whether the subclasses may overlap. A d means "
+        "disjoint, so a row joins at most one subclass: an employee is a manager or "
+        "a driver and never both, and a movement is a shipment or a return. An o "
+        "means overlapping, so a row may join more than one: a product can be both "
+        "perishable and hazardous, and its ProductID then appears in both subclass "
+        "tables.",
+        "The line running into the circle says whether every row has to join a "
+        "subclass at all. A double line means total, which is why EMPLOYEE and "
+        "GOODS_MOVEMENT have one. A single line means partial, which is why PRODUCT "
+        "has one: most products are neither perishable nor hazardous.",
+        "The subset symbol on each line from a subclass up to the circle points at "
+        "the superclass and says that every row of the subclass is also a row of the "
+        "superclass. It is the reason the subclass tables share the superclass key "
+        "rather than inventing one of their own.",
+    ])
     para("Because SHIPMENT and GOODS_RETURN now sit under one superclass, the two "
          "links each of them had to ORDERS and to WAREHOUSE become one link each, "
          "MOVEMENT_FOR and HANDLED_AT, and their two keys collapse into the single "
@@ -672,22 +691,22 @@ def build_docx():
          "untouched.")
     figure("decomp_tree.png", "Figure 10. Decomposition from UNF to BCNF, showing "
                               "every column at every stage")
-    para("Eight relations come out of this decomposition. The remaining twelve "
+    para("Eight relations come out of this decomposition. The remaining thirteen "
          "tables of the final design (SUPPLIER, SUPPLIES, INSPECTION, "
-         "PERISHABLE_PRODUCT, WAREHOUSE, EMPLOYEE, MANAGER, DRIVER, STOCK, "
-         "GOODS_MOVEMENT, SHIPMENT and GOODS_RETURN) come straight from the EER "
-         "mapping in section 6, and each of them was already in BCNF. Eight plus "
-         "twelve is the twenty tables of section 10.")
+         "PERISHABLE_PRODUCT, HAZARDOUS_PRODUCT, WAREHOUSE, EMPLOYEE, MANAGER, "
+         "DRIVER, STOCK, GOODS_MOVEMENT, SHIPMENT and GOODS_RETURN) come straight "
+         "from the EER mapping in section 6, and each of them was already in BCNF. "
+         "Eight plus thirteen is the twenty-one tables of section 10.")
 
     # ---------------- 10
     h("10. Final Schema", 1)
-    para("The finished design has 20 tables and every one of them is in BCNF, which "
+    para("The finished design has 21 tables and every one of them is in BCNF, which "
          "also means every one is in 1NF, 2NF and 3NF. In Figure 11 the tables are "
          "grouped under three headings, master data and supply, warehouse and "
          "staff, and orders and movements. A column name is underlined where it "
          "forms part of the primary key and italicised where it is a foreign key, "
          "so a column that is both is underlined and italic.")
-    figure("final_schema.png", "Figure 11. Final relational schema, 20 tables in "
+    figure("final_schema.png", "Figure 11. Final relational schema, 21 tables in "
                                "BCNF")
     h("10.1 Keys of Every Table", 2)
     table(["Table", "Primary key", "Foreign keys"], SCHEMA,
@@ -707,6 +726,9 @@ def build_docx():
         "warehouse.",
         "An inspection cannot name a supplier and a product that are not actually "
         "paired, because its foreign key is the pair.",
+        "A product that is both perishable and hazardous is one row in PRODUCT with "
+        "one row in each subclass table, so neither set of handling rules has to be "
+        "copied into the other.",
     ])
     para("Two tables are worth a second look. WAREHOUSE has two candidate keys, "
          "WarehouseID and ManagerID, because MANAGES is 1:1 and ManagerID is "
@@ -725,15 +747,16 @@ def build_docx():
     # ---------------- 11
     h("11. Conclusion and Next Steps", 1)
     para("DA1 delivered an ER model of nine entities and twelve relationships, the "
-         "same model extended into an EER model with specialization, generalization, "
-         "aggregation, a weak entity, a 1:1 relationship made precise, and "
+         "same model extended into an EER model with specialization, both total and "
+         "disjoint and partial and overlapping, generalization, aggregation, a weak "
+         "entity, a 1:1 relationship made precise, and "
          "multivalued, composite and derived attributes, a dependency analysis "
          "carried out on sample rows, and a full normalization from UNF to BCNF in "
          "which every step is shown with the tables before and after. The result is "
-         "20 tables, all in BCNF.")
+         "21 tables, all in BCNF.")
     para("DA2, due 18 September 2026: ", bold=True)
     d.paragraphs[-1].add_run(
-        "create the 20 tables in SQL with their keys and constraints, load sample "
+        "create the 21 tables in SQL with their keys and constraints, load sample "
         "data, add the trigger that enforces the dependency lost at BCNF, and write "
         "PL/SQL procedures for receiving stock and dispatching an order.")
     para("DA3, due 23 October 2026: ", bold=True)
@@ -951,8 +974,9 @@ def build_pptx():
         "Specialization works downwards, from a type we already had to its kinds.",
         "  EMPLOYEE existed; splitting it gives MANAGER (Level, Bonus) and DRIVER "
         "(LicenseNo, Expiry). Total and disjoint.",
-        "  PRODUCT existed; only some products need ShelfLifeDays and StorageTempC, "
-        "so PERISHABLE_PRODUCT is a partial specialization.",
+        "  PRODUCT existed; PERISHABLE_PRODUCT and HAZARDOUS_PRODUCT are partial "
+        "(most products are neither) and overlapping (a vaccine is both), so that "
+        "circle is marked o and not d.",
         "Generalization works upwards, from types we already had to what they share.",
         "  SHIPMENT and GOODS_RETURN were both in the ER model. Both are one "
         "order's goods moving on a date with a status, so GOODS_MOVEMENT is created "
@@ -1054,7 +1078,7 @@ def build_pptx():
     image_slide("9. The Decomposition, End to End", img("decomp_tree.png"),
                 subtitle="every relation, every column, at every stage")
 
-    image_slide("10. Final Schema, 20 Tables, All in BCNF", img("final_schema.png"))
+    image_slide("10. Final Schema, 21 Tables, All in BCNF", img("final_schema.png"))
 
     bullets_slide("10. Why the Design Is Now Safe", [
         "Every fact is stored in exactly one place, so two rows can never disagree.",
@@ -1072,7 +1096,7 @@ def build_pptx():
 
     bullets_slide("11. What Comes Next", [
         "DA2, due 18 September 2026",
-        "  Create the 20 tables in SQL with keys and constraints, load sample data, "
+        "  Create the 21 tables in SQL with keys and constraints, load sample data, "
         "add the BCNF trigger, and write PL/SQL for receiving stock and dispatching "
         "orders.",
         "DA3, due 23 October 2026",
@@ -1086,7 +1110,7 @@ def build_pptx():
     textbox(s, 0.8, 2.9, 11.7, 1.2, "Thank You", 44, PBLACK, bold=True,
             align=PP_ALIGN.CENTER)
     rule(s, 4.15, l=4.4, w=4.5)
-    textbox(s, 0.8, 4.35, 11.7, 0.7, "9 entities, 12 relationships, 20 tables, all "
+    textbox(s, 0.8, 4.35, 11.7, 0.7, "9 entities, 12 relationships, 21 tables, all "
             "in BCNF", 19, PGREY, italic=True, align=PP_ALIGN.CENTER)
     textbox(s, 0.8, 5.7, 11.7, 0.7,
             "   |   ".join(f"{n} ({r})" for n, r in TEAM), 14, PBLACK,

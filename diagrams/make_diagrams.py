@@ -19,12 +19,13 @@ two can never drift out of agreement.
 
 Run: python make_diagrams.py
 """
+import math
 import os
 import textwrap
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.patches import Ellipse, Rectangle, Circle, Polygon
+from matplotlib.patches import Arc, Ellipse, Rectangle, Circle, Polygon
 
 matplotlib.rcParams["font.family"] = "sans-serif"
 matplotlib.rcParams["font.sans-serif"] = ["Arial", "Helvetica", "DejaVu Sans"]
@@ -139,6 +140,13 @@ def attr(ax, x, y, text, key=False, partial=False, multi=False, derived=False,
     if key or partial:
         _queue_underline(ax, t, dashed=partial)
     return w
+
+
+def subset(ax, at, towards, r=0.21):
+    """The subset symbol that sits on a subclass line, opening at the superclass."""
+    ang = math.degrees(math.atan2(towards[1] - at[1], towards[0] - at[0]))
+    ax.add_patch(Arc(at, 2 * r, 2 * r, angle=ang, theta1=96, theta2=264,
+                     color=INK, lw=1.3, zorder=6))
 
 
 def line(ax, p1, p2, label=None, total=False, lw=1.1, color=INK, fs=8.5):
@@ -432,7 +440,7 @@ def er_model():
 
 # =============================================================== 2. EER MODEL
 def eer_model():
-    fig, ax = canvas(27.0, 16.6, y0=-1.9)
+    fig, ax = canvas(27.0, 19.4, y0=-1.9)
 
     TOP, MID, BOT = 9.8, 6.5, 3.4
 
@@ -470,6 +478,8 @@ def eer_model():
     entity(ax, 17.0, 0.6, "GOODS_RETURN", w=3.2, h=0.88, shaded=True)
     line(ax, (14.09, 1.79), (11.7, 1.04))
     line(ax, (14.51, 1.79), (17.0, 1.04))
+    subset(ax, (12.90, 1.42), (14.30, 2.00))
+    subset(ax, (15.75, 1.42), (14.30, 2.00))
     attr(ax, 10.6, -0.9, "DeliveryDate", shaded=True)
     line(ax, (10.6, -0.59), (11.7, 0.16), lw=0.8, color=GREY)
     attr(ax, 15.6, -0.9, "Reason", shaded=True)
@@ -490,8 +500,8 @@ def eer_model():
     line(ax, (8.2, 7.69), (8.2, 7.06), "N", total=True)
     line(ax, (8.2, 6.14), (8.2, 5.51), "N", total=True)
     line(ax, (8.2, 4.49), (8.2, BOT + 0.48), "1")
-    attr(ax, 5.70, 6.60, "ItemNo", partial=True, shaded=True)
-    line(ax, (6.43, 6.60), (6.70, 6.60), lw=0.8, color=GREY)
+    attr(ax, 10.95, 6.65, "ItemNo", partial=True, shaded=True)
+    line(ax, (10.22, 6.65), (9.70, 6.60), lw=0.8, color=GREY)
     attr(ax, 11.05, 7.62, "Qty")
     line(ax, (10.6, 7.34), (9.6, 7.02), lw=0.8, color=GREY)
 
@@ -504,6 +514,8 @@ def eer_model():
     entity(ax, 23.1, 6.25, "DRIVER", w=2.5, h=0.88, shaded=True)
     line(ax, (20.66, 7.70), (18.7, 6.69))
     line(ax, (21.14, 7.70), (23.1, 6.69))
+    subset(ax, (19.68, 7.20), (20.90, 7.95))
+    subset(ax, (22.12, 7.20), (20.90, 7.95))
     for xx, t in [(17.55, "Level"), (19.75, "Bonus")]:
         attr(ax, xx, 4.85, t, shaded=True)
         line(ax, (xx, 5.16), (18.7, 5.81), lw=0.8, color=GREY)
@@ -511,17 +523,25 @@ def eer_model():
         attr(ax, xx, 4.85, t, shaded=True)
         line(ax, (xx, 5.16), (23.1, 5.81), lw=0.8, color=GREY)
 
-    # ---- added 3: PRODUCT specialization, partial
-    ax.add_patch(Circle((5.00, 7.80), 0.31, fc=SHADE, ec=INK, lw=1.2, zorder=4))
-    ax.text(5.00, 7.80, "d", ha="center", va="center", fontsize=10.5,
+    # ---- added 3: PRODUCT specialization, partial and overlapping
+    ax.add_patch(Circle((4.30, 8.05), 0.31, fc=SHADE, ec=INK, lw=1.2, zorder=4))
+    ax.text(4.30, 8.05, "o", ha="center", va="center", fontsize=10.5,
             weight="bold", color=INK, zorder=5)
-    line(ax, (7.10, 9.33), (5.24, 7.99))
-    entity(ax, 2.60, 6.40, "PERISHABLE\nPRODUCT", w=2.8, h=0.98, shaded=True)
-    line(ax, (4.78, 7.62), (3.50, 6.89))
-    attr(ax, 1.60, 7.75, "ShelfLifeDays", shaded=True)
-    line(ax, (1.80, 7.44), (2.20, 6.89), lw=0.8, color=GREY)
-    attr(ax, 1.50, 5.15, "StorageTempC", shaded=True)
-    line(ax, (1.80, 5.46), (2.20, 5.91), lw=0.8, color=GREY)
+    line(ax, (7.10, 9.33), (4.54, 8.22))
+    entity(ax, 1.75, 6.40, "PERISHABLE\nPRODUCT", w=2.9, h=0.98, shaded=True)
+    entity(ax, 5.15, 6.40, "HAZARDOUS\nPRODUCT", w=2.7, h=0.98, shaded=True)
+    line(ax, (4.13, 7.76), (2.05, 6.89))
+    line(ax, (4.47, 7.76), (5.00, 6.89))
+    subset(ax, (3.15, 7.29), (4.30, 8.05))
+    subset(ax, (4.76, 7.29), (4.30, 8.05))
+    attr(ax, 1.35, 8.35, "ShelfLifeDays", shaded=True)
+    line(ax, (1.35, 8.04), (1.60, 6.89), lw=0.8, color=GREY)
+    attr(ax, 1.25, 5.30, "StorageTempC", shaded=True)
+    line(ax, (1.45, 5.61), (1.90, 5.91), lw=0.8, color=GREY)
+    attr(ax, 4.20, 5.35, "HazardClass", shaded=True)
+    line(ax, (4.30, 5.66), (4.80, 5.91), lw=0.8, color=GREY)
+    attr(ax, 6.55, 5.35, "HandlingNote", shaded=True)
+    line(ax, (6.50, 5.66), (5.55, 5.91), lw=0.8, color=GREY)
 
     # ---- added 4: recursive SUPERVISES on EMPLOYEE
     rel(ax, 25.10, TOP, "SUPERVISES", w=2.7, h=1.2, fs=7.8, shaded=True)
@@ -574,6 +594,19 @@ def eer_model():
                           (18.35, 2.45, "Status", {"shaded": True})]:
         attr(ax, xx, yy, t, **kw)
         line(ax, (xx - 0.9, yy), (16.0, BOT), lw=0.8, color=GREY)
+
+    # ---- added: aggregation, the boxed SUPPLIES arrangement inspected as a whole
+    ax.add_patch(Rectangle((0.55, 9.10), 9.30, 1.42, fc="none", ec=INK, lw=1.5,
+                           zorder=2))
+    rel(ax, 5.30, 13.55, "INSPECTED_IN", w=2.6, h=1.2, fs=7.2, shaded=True)
+    line(ax, (5.30, 10.52), (5.30, 12.95), "1")
+    entity(ax, 5.30, 15.45, "INSPECTION", w=3.0, shaded=True)
+    line(ax, (5.30, 14.15), (5.30, 14.98), "N", total=True)
+    for xx, t, kw in [(2.55, "InspID", {"key": True, "shaded": True}),
+                      (5.30, "InspDate", {"shaded": True}),
+                      (8.05, "Result", {"shaded": True})]:
+        attr(ax, xx, 16.75, t, **kw)
+        line(ax, (xx, 16.44), (5.30, 15.93), lw=0.8, color=GREY)
 
     save(fig, "eer_model")
 
@@ -818,6 +851,8 @@ def final_schema():
             ("SUPPLIER_PHONE", ["SupplierID", "Phone"], (0, 1), (0,)),
             ("PRODUCT", ["ProductID", "PName", "Category", "UnitPrice"], (0,), ()),
             ("PERISHABLE_PRODUCT", ["ProductID", "ShelfLifeDays", "StorageTempC"],
+             (0,), (0,)),
+            ("HAZARDOUS_PRODUCT", ["ProductID", "HazardClass", "HandlingNote"],
              (0,), (0,)),
             ("SUPPLIES", ["SupplierID", "ProductID", "LeadTimeDays", "SupplyPrice"],
              (0, 1), (0, 1)),
