@@ -12,8 +12,9 @@ Ten PNGs:
   decomp_tree   - decomposition tree, UNF to BCNF, with every column
   final_schema  - final set of tables with keys
 
-The normalization figures hold tables only. All reasoning about them lives in
-the report text, not inside the picture.
+Every figure holds the diagram and nothing else: no titles, captions,
+legends or commentary. All of the reasoning lives in the report text, so the
+two can never drift out of agreement.
 
 Run: python make_diagrams.py
 """
@@ -31,7 +32,6 @@ OUT = os.path.dirname(os.path.abspath(__file__))
 
 INK = "#000000"
 GREY = "#808080"
-FAINT = "#bfbfbf"
 HFILL = "#d9d9d9"      # column-header fill
 ZEBRA = "#f4f4f4"      # alternate row fill
 SHADE = "#e6e6e6"      # marks the parts EER adds to the ER model
@@ -59,15 +59,12 @@ def flush_underlines(fig):
     _UNDER.clear()
 
 
-def canvas(w, h, y0=0.0, subtitle=None):
-    """Axes w units wide and h units tall. bbox_inches='tight' crops the slack."""
+def canvas(w, h, y0=0.0):
+    """Axes w units wide and h units tall. fit() trims it to the content later."""
     fig, ax = plt.subplots(figsize=(w * UNITS_PER_INCH, h * UNITS_PER_INCH))
     ax.set_xlim(0, w)
     ax.set_ylim(y0, y0 + h)
     ax.axis("off")
-    if subtitle:
-        ax.text(w / 2, y0 + h - 0.45, subtitle, ha="center", va="center",
-                fontsize=10.5, color="#333333", style="italic")
     return fig, ax
 
 
@@ -155,28 +152,6 @@ def line(ax, p1, p2, label=None, total=False, lw=1.1, color=INK, fs=8.5):
         ax.text((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2 + 0.17, label, ha="center",
                 va="center", fontsize=fs, weight="bold", color=INK, zorder=6,
                 bbox=dict(fc="white", ec="none", pad=0.8))
-
-
-def note(ax, x, y, text, fs=7.8, ha="center"):
-    ax.text(x, y, text, ha=ha, va="center", fontsize=fs, color="#333333",
-            style="italic", zorder=6)
-
-
-def panel(ax, x, ytop, w, title, rows, fs=8.6, tfs=10.0, wrapat=None, lh=0.42):
-    """Plain bordered box holding a short list. y is the TOP edge."""
-    wrapat = wrapat or int(w * 7.6)
-    lines = []
-    for r in rows:
-        lines.extend(textwrap.wrap(r, wrapat) or [""])
-    h = 0.78 + lh * len(lines)
-    ax.add_patch(Rectangle((x, ytop - h), w, h, fc="white", ec=INK, lw=1.0, zorder=3))
-    ax.text(x + 0.24, ytop - 0.38, title, fontsize=tfs, weight="bold", color=INK,
-            zorder=4)
-    yy = ytop - 0.94
-    for ln in lines:
-        ax.text(x + 0.28, yy, ln, fontsize=fs, color=INK, va="center", zorder=4)
-        yy -= lh
-    return ytop - h
 
 
 # ---------------------------------------------------------------- relation table
@@ -349,8 +324,7 @@ ORDER_DRIVER = dict(
 
 # ================================================================ 1. ER MODEL
 def er_model():
-    fig, ax = canvas(23.2, 13.6, y0=0.6,
-                     subtitle="7 entities, 7 relationships, Chen notation")
+    fig, ax = canvas(23.2, 13.6, y0=0.6)
 
     TOP, MID, BOT = 9.4, 6.5, 3.6
 
@@ -419,34 +393,12 @@ def er_model():
     fan(14.3, BOT, [("ShipmentID", {"key": True}), ("DispatchDate", {}),
                     ("DeliveryDate", {}), ("Status", {})], up=False)
 
-    # relationship summary, left middle
-    ax.add_patch(Rectangle((0.55, 4.55), 6.2, 3.75, fc="white", ec=INK, lw=1.0,
-                           zorder=3))
-    ax.text(0.80, 7.95, "The 7 relationships", fontsize=10.2, weight="bold",
-            color=INK, zorder=4)
-    for i, (r, p, c) in enumerate([
-            ("SUPPLIES", "SUPPLIER - PRODUCT", "M:N"),
-            ("STORED_IN", "PRODUCT - WAREHOUSE", "M:N"),
-            ("CONTAINS", "PRODUCT - ORDERS", "M:N"),
-            ("WORKS_AT", "WAREHOUSE - EMPLOYEE", "1:N"),
-            ("PLACES", "CUSTOMER - ORDERS", "1:N"),
-            ("SHIPPED_BY", "ORDERS - SHIPMENT", "1:N"),
-            ("DISPATCHED_FROM", "WAREHOUSE - SHIPMENT", "1:N")]):
-        yy = 7.48 - 0.45 * i
-        ax.text(0.80, yy, r, fontsize=7.6, weight="bold", color=INK, zorder=4)
-        ax.text(3.05, yy, p, fontsize=7.6, color=INK, zorder=4)
-        ax.text(6.55, yy, c, fontsize=7.6, weight="bold", color=INK, ha="right",
-                zorder=4)
-
     save(fig, "er_model")
 
 
 # =============================================================== 2. EER MODEL
 def eer_model():
-    fig, ax = canvas(27.0, 15.2, y0=-0.6,
-                     subtitle="the shaded parts are what EER adds: specialization, "
-                              "a weak entity, multivalued, composite and derived "
-                              "attributes, and a recursive relationship")
+    fig, ax = canvas(27.0, 15.2, y0=-0.6)
 
     TOP, MID, BOT = 9.8, 6.5, 3.4
 
@@ -487,8 +439,6 @@ def eer_model():
     line(ax, (6.43, 6.60), (6.70, 6.60), lw=0.8, color=GREY)
     attr(ax, 11.05, 7.62, "Qty")
     line(ax, (10.6, 7.34), (9.6, 7.02), lw=0.8, color=GREY)
-    note(ax, 9.95, 5.0, "identifying relationship", ha="left")
-    note(ax, 9.90, 6.60, "weak entity", ha="left")
 
     # ---- added 2: EMPLOYEE specialization, total and disjoint
     ax.add_patch(Circle((20.9, 7.95), 0.31, fc=SHADE, ec=INK, lw=1.2, zorder=4))
@@ -505,7 +455,6 @@ def eer_model():
     for xx, t in [(22.05, "LicenseNo"), (24.35, "Expiry")]:
         attr(ax, xx, 4.85, t, shaded=True)
         line(ax, (xx, 5.16), (23.1, 5.81), lw=0.8, color=GREY)
-    note(ax, 20.9, 3.75, "total and disjoint: every employee is exactly one of these")
 
     # ---- added 3: PRODUCT specialization, partial
     ax.add_patch(Circle((5.00, 7.80), 0.31, fc=SHADE, ec=INK, lw=1.2, zorder=4))
@@ -518,7 +467,6 @@ def eer_model():
     line(ax, (1.80, 7.44), (2.20, 6.89), lw=0.8, color=GREY)
     attr(ax, 1.50, 5.15, "StorageTempC", shaded=True)
     line(ax, (1.80, 5.46), (2.20, 5.91), lw=0.8, color=GREY)
-    note(ax, 2.60, 4.35, "partial: most products\nare not perishable")
 
     # ---- added 4: recursive SUPERVISES on EMPLOYEE
     rel(ax, 25.10, TOP, "SUPERVISES", w=2.7, h=1.2, fs=7.8, shaded=True)
@@ -539,7 +487,6 @@ def eer_model():
 
     fan_up(2.3, [("SupplierID", {"key": True}), ("SName", {}),
                  ("City", {}), ("Phone", {"multi": True, "shaded": True})])
-    note(ax, 4.35, 11.5, "multivalued", ha="left")
     fan_up(8.2, [("ProductID", {"key": True}), ("PName", {}),
                  ("Category", {}), ("UnitPrice", {})])
     fan_up(14.3, [("WarehouseID", {"key": True}), ("WName", {}),
@@ -557,7 +504,6 @@ def eer_model():
     for xx, t in [(0.85, "Street"), (2.3, "City"), (3.8, "Pincode")]:
         attr(ax, xx, 0.15, t, h=0.56, fs=7.2, shaded=True)
         line(ax, (xx, 0.43), (2.3, 0.89), lw=0.8, color=GREY)
-    note(ax, 4.55, 1.20, "composite", ha="left")
 
     for xx, yy, t, kw in [(7.05, 2.25, "OrderID", {"key": True}),
                           (9.35, 2.25, "OrderDate", {}),
@@ -566,7 +512,6 @@ def eer_model():
                                                     "shaded": True})]:
         attr(ax, xx, yy, t, **kw)
         line(ax, (xx, yy + 0.31), (8.2, BOT - 0.48), lw=0.8, color=GREY)
-    note(ax, 10.45, 1.20, "derived", ha="left")
 
     for xx, yy, t, kw in [(13.15, 2.25, "ShipmentID", {"key": True}),
                           (15.45, 2.25, "Status", {}),
@@ -574,14 +519,6 @@ def eer_model():
                           (15.45, 1.20, "DeliveryDate", {})]:
         attr(ax, xx, yy, t, **kw)
         line(ax, (xx, yy + 0.31), (14.3, BOT - 0.48), lw=0.8, color=GREY)
-
-    panel(ax, 17.3, 3.30, 9.3, "What EER adds to the ER model", [
-        "ORDER_ITEM, a weak entity replacing the M:N CONTAINS",
-        "EMPLOYEE split into MANAGER and DRIVER (specialization)",
-        "PERISHABLE_PRODUCT, a partial specialization of PRODUCT",
-        "Phone multivalued, Address composite, TotalAmt derived",
-        "SUPERVISES, EMPLOYEE related back to itself",
-    ], fs=8.6, tfs=10.0, wrapat=70)
 
     save(fig, "eer_model")
 
@@ -776,17 +713,12 @@ def decomp_tree():
                 ax.plot([xm, x1], [cy, cy], color=INK, lw=lw, zorder=1)
         prev_cols = {n[0]: n[1] for n in nodes}
 
-    ax.text(0.35, 0.30, "A bold box is a relation created or changed at that stage; "
-                        "a thin box is carried forward unchanged.",
-            fontsize=8.6, color="#333333", style="italic")
-
     save(fig, "decomp_tree")
 
 
 # ============================================================ 10. FINAL SCHEMA
 def final_schema():
-    fig, ax = canvas(20.4, 11.4, y0=1.2,
-                     subtitle="underlined = primary key,  italic = foreign key")
+    fig, ax = canvas(20.4, 11.4, y0=1.2)
 
     groups = [
         ("Master data", [
@@ -846,15 +778,6 @@ def final_schema():
                     _queue_underline(ax, t, dy=0.055)
             y -= (0.40 + rh + 0.34)
         x += GW + 0.60
-
-    ax.text(10.2, 2.10, "17 tables. Every table has one subject, every fact is "
-                        "stored in exactly one place, and no table can contradict "
-                        "another.", ha="center", fontsize=10.2, color=INK,
-            weight="bold")
-    ax.text(10.2, 1.60, "1NF atomic cells      2NF no partial dependency      "
-                        "3NF no transitive dependency      "
-                        "BCNF every determinant is a key",
-            ha="center", fontsize=9, color="#333333", style="italic")
 
     save(fig, "final_schema")
 

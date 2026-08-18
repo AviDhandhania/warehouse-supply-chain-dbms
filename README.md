@@ -46,8 +46,9 @@ is then justified by one of those refs.
 9. `decomp_tree` — UNF → BCNF as a tree, every column at every stage
 10. `final_schema` — all 17 tables with their keys
 
-Tables only inside the normalization figures; the reasoning lives in the report
-text, so the two never drift out of agreement.
+Every PNG holds the diagram and nothing else: no titles, captions, legends or
+commentary. All of the reasoning, including the notation legends, lives in the
+report text, so the two can never drift out of agreement.
 
 ## Still to fill in
 

@@ -483,6 +483,18 @@ def build_docx():
          "describe situations plain ER cannot. Figure 2 is the identical design from "
          "Figure 1, with everything EER contributes drawn shaded.")
     figure("eer_model.png", "Figure 2. The same model, extended with EER features")
+    para("Five pieces of notation appear in Figure 2 that Figure 1 does not need. A "
+         "double ellipse is a multivalued attribute, so SUPPLIER.Phone is drawn that "
+         "way. A composite attribute is drawn as an ellipse with its parts hanging "
+         "below it, which is how CUSTOMER.Address carries Street, City and Pincode. "
+         "A dashed ellipse is a derived attribute, used for ORDERS.TotalAmt. A circle "
+         "marked 'd' on a specialization means the subclasses are disjoint, and the "
+         "line running into that circle is doubled when the specialization is total: "
+         "EMPLOYEE has a double line because every employee is a manager or a "
+         "driver, while PRODUCT has a single line because most products are not "
+         "perishable. A weak entity has a double border and reaches its owner "
+         "through a double diamond, which is why ORDER_ITEM and HAS are drawn that "
+         "way.")
     h("5.1 What EER Added and Why", 2)
     table(["EER feature", "Where", "Why it is needed"],
           EER_ADDED, widths=[1.4, 1.5, 3.7], fs=9)
@@ -587,7 +599,11 @@ def build_docx():
     # ---------------- 10
     h("10. Final Schema", 1)
     para("The finished design has 17 tables and every one of them is in BCNF, which "
-         "also means every one is in 1NF, 2NF and 3NF.")
+         "also means every one is in 1NF, 2NF and 3NF. In Figure 10 the tables are "
+         "grouped under three headings, master data, warehouse and staff, and stock "
+         "and orders. A column name is underlined where it forms part of the primary "
+         "key and italicised where it is a foreign key, so a column that is both is "
+         "underlined and italic.")
     figure("final_schema.png", "Figure 10. Final relational schema, 17 tables in "
                                "BCNF")
     h("10.1 Keys of Every Table", 2)
