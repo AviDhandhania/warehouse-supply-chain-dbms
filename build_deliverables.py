@@ -41,7 +41,7 @@ ENTITIES = [
     ("WAREHOUSE", "WarehouseID", "WName, City, Capacity"),
     ("PRODUCT", "ProductID", "PName, Category, UnitPrice"),
     ("SUPPLIER", "SupplierID", "SName, City, Phone (many per supplier)"),
-    ("CUSTOMER", "CustomerID", "CName, Address (Street + City + Pincode), Phone"),
+    ("CUSTOMER", "CustomerID", "CName, Address (Street + City), Phone"),
     ("ORDERS", "OrderID", "OrderDate, Status, TotalAmt (calculated)"),
     ("SHIPMENT", "ShipmentID", "DispatchDate, DeliveryDate, Status"),
     ("GOODS_RETURN", "ReturnID", "ReturnDate, Reason, RefundAmt, Status"),
@@ -93,8 +93,8 @@ EER_ADDED = [
     ("Multivalued attribute", "SUPPLIER.Phone",
      "One supplier can have several phone numbers."),
     ("Composite attribute", "CUSTOMER.Address",
-     "Address is made of Street, City and Pincode, which we sometimes need "
-     "separately."),
+     "Address is made of Street and City, and we need the city on its own "
+     "because a city decides its state."),
     ("Derived attribute", "ORDERS.TotalAmt",
      "It can always be worked out by adding up the order lines, so storing it "
      "would only create a second copy that can go stale."),
@@ -158,8 +158,8 @@ SCHEMA = [
     ("ORDERS", "OrderID", "CustID"),
     ("ORDER_ITEM", "OrderID + ItemNo", "OrderID, ProductID"),
     ("ORDER_DRIVER", "OrderID + DriverID", "OrderID, DriverID"),
-    ("GOODS_MOVEMENT", "MovementID", "OrderID"),
-    ("SHIPMENT", "MovementID", "MovementID, WarehouseID"),
+    ("GOODS_MOVEMENT", "MovementID", "OrderID, WarehouseID"),
+    ("SHIPMENT", "MovementID", "MovementID"),
     ("GOODS_RETURN", "MovementID", "MovementID"),
 ]
 
@@ -170,10 +170,10 @@ FD_HOLD = [
      "Rows 1 and 2 are both O-101 and agree on all three columns, and rows 6 and 7 "
      "do the same for O-105.",
      "O-101 in rows 1 and 2, O-105 in rows 6 and 7"),
-    ("F2", "CustID -> CName, Street, City",
-     "C-01 appears in rows 1, 2 and 4 with the same name, street and city, and C-03 "
-     "appears in rows 3, 6 and 7.",
-     "C-01 in rows 1, 2, 4; C-03 in rows 3, 6, 7"),
+    ("F2", "CustID -> CName, Street, City, CustPhone",
+     "C-01 appears in rows 1, 2 and 4 with the same name, street, city and phone, "
+     "C-03 in rows 3, 6 and 7, and C-05 in rows 5 and 8.",
+     "C-01 in rows 1, 2, 4; C-03 in rows 3, 6, 7; C-05 in rows 5, 8"),
     ("F3", "City -> State",
      "Chennai always carries Tamil Nadu (rows 1, 2, 4, 5) and Mumbai always carries "
      "Maharashtra (rows 3, 6, 7).",
@@ -183,8 +183,8 @@ FD_HOLD = [
      "96 in rows 3 and 7.",
      "P-100 is 480 twice, P-104 is 132 twice, P-210 is 96 twice"),
     ("F5", "{OrderID, ProductID} -> Qty",
-     "The pair is unique across the seven rows, and neither column alone fixes Qty "
-     "(see N1 and N2).",
+     "The pair is unique across all eight rows, and neither column alone fixes "
+     "Qty (see N1 and N2).",
      "the pair is unique, and neither half works alone"),
     ("F6", "DriverID -> City",
      "In DELIVERY_DUTY, D-05 is Chennai in rows 1, 4 and 5, and D-09 is Mumbai in "
@@ -546,7 +546,7 @@ def build_docx():
     para("Figure 2 uses several pieces of notation that Figure 1 does not need. A "
          "double ellipse is a multivalued attribute, so SUPPLIER.Phone is drawn that "
          "way. A composite attribute is drawn as an ellipse with its parts hanging "
-         "below it, which is how CUSTOMER.Address carries Street, City and Pincode. "
+         "below it, which is how CUSTOMER.Address carries Street and City. "
          "A dashed ellipse is a derived attribute, used for ORDERS.TotalAmt. A "
          "rectangle drawn around a whole relationship marks an aggregation, which "
          "section 5.2 covers. A weak entity has a double border and reaches its owner "
@@ -581,17 +581,14 @@ def build_docx():
     table(["EER feature", "Where", "Why it is needed"],
           EER_ADDED, widths=[1.4, 1.5, 3.7], fs=9)
     h("5.2 Aggregation", 2)
-    para("Aggregation is drawn on its own in Figure 3, because the box it needs "
-         "would sit on top of half of Figure 2. The box encloses SUPPLIER, "
-         "SUPPLIES and PRODUCT and says: treat that whole arrangement as one "
-         "object. INSPECTION then joins to the box rather than to either entity "
-         "inside it, which is exactly the statement plain ER could not make. When "
-         "this maps to tables the aggregate is the SUPPLIES table, and INSPECTION "
-         "carries SupplierID and ProductID together as one foreign key into it, so "
-         "an inspection can only ever name a pair that really is supplied.")
-    figure("eer_aggregation.png", "Figure 3. The aggregation: INSPECTION joins the "
-                                  "boxed SUPPLIES arrangement, not its members",
-           width=5.0)
+    para("The rectangle at the top left of Figure 2 is the aggregation. It encloses "
+         "SUPPLIER, SUPPLIES and PRODUCT and says: treat that whole arrangement as "
+         "one object. INSPECTION then joins the box rather than either entity "
+         "inside it, which is exactly the statement plain ER could not make, and it "
+         "is why Figure 1 needs two links where Figure 2 needs one. When this maps "
+         "to tables the aggregate is the SUPPLIES table, and INSPECTION carries "
+         "SupplierID and ProductID together as one foreign key into it, so an "
+         "inspection can only ever name a pair that really is supplied.")
     h("5.3 The Weak Entity", 2)
     para("The weak entity is worth singling out. ORDER_ITEM is drawn with a double "
          "border because it cannot exist on its own, and the diamond joining it to "
@@ -626,11 +623,13 @@ def build_docx():
          "X -> Y is dead. So each relation below is filled with at least five rows, "
          "every candidate dependency is checked against them, and the survivors are "
          "kept only if they also make sense as a rule of the business.")
-    figure("sample_data.png", "Figure 4. Sample rows used for the dependency "
-                              "analysis. The seven ORDER_LINE rows are numbered 1 to "
-                              "7 from the top.")
+    figure("sample_data.png", "Figure 3. Sample rows used for the dependency "
+                              "analysis. The eight ORDER_LINE rows are numbered 1 "
+                              "to 8 from the top.")
     para("ORDER_LINE holds every order and product fact in one relation, which is "
-         "the state the design is in before normalization. DELIVERY_DUTY records "
+         "the state the design is in before normalization. It is the same instance "
+         "the rest of the report works on: joining ORDERS, CUSTOMER, CITY and "
+         "ORDER_ITEM in section 8 gives these eight rows back exactly. DELIVERY_DUTY records "
          "which driver took an order out in which city, under two rules the "
          "transport team works to: each driver covers exactly one city, and within a "
          "city an order always goes to the same driver.")
@@ -652,12 +651,12 @@ def build_docx():
          "For ORDER_LINE, start with {OrderID, ProductID}:")
     bullets([
         "F1 adds OrderDate, Status and CustID.",
-        "F2 then adds CName, Street and City.",
+        "F2 then adds CName, Street, City and CustPhone.",
         "F3 then adds State.",
         "F4 adds PName, Category and Price.",
         "F5 adds Qty.",
     ])
-    para("The closure is now all thirteen columns, so {OrderID, ProductID} is a "
+    para("The closure is now all fourteen columns, so {OrderID, ProductID} is a "
          "key. Neither half works alone: OrderID cannot fix ProductID (N2) and "
          "ProductID cannot fix Qty (N1), so nothing smaller is a key and this is the "
          "only candidate key of ORDER_LINE.")
@@ -678,18 +677,18 @@ def build_docx():
         h(heading, 2)
         para(text)
         para(verdict, italic=True, size=10.5)
-        figure(name, "Figure " + str(5 + i) + ". " + heading.split("  ", 1)[1])
+        figure(name, "Figure " + str(4 + i) + ". " + heading.split("  ", 1)[1])
 
     # ---------------- 9
     h("9. The Decomposition, End to End", 1)
-    para("Figure 10 puts the five stages side by side and follows every relation "
+    para("Figure 9 puts the five stages side by side and follows every relation "
          "through them, with all of its columns and its key at each stage. Reading "
          "left to right, one relation becomes four at 1NF, ORDER_ITEM sheds a "
          "PRODUCT table at 2NF, ORDER_MASTER becomes three tables at 3NF, and "
          "DELIVERY_DUTY becomes two at BCNF. A relation drawn in a bold box was "
          "created or changed at that stage, and a thin box is carried forward "
          "untouched.")
-    figure("decomp_tree.png", "Figure 10. Decomposition from UNF to BCNF, showing "
+    figure("decomp_tree.png", "Figure 9. Decomposition from UNF to BCNF, showing "
                               "every column at every stage")
     para("Eight relations come out of this decomposition. The remaining thirteen "
          "tables of the final design (SUPPLIER, SUPPLIES, INSPECTION, "
@@ -701,12 +700,12 @@ def build_docx():
     # ---------------- 10
     h("10. Final Schema", 1)
     para("The finished design has 21 tables and every one of them is in BCNF, which "
-         "also means every one is in 1NF, 2NF and 3NF. In Figure 11 the tables are "
+         "also means every one is in 1NF, 2NF and 3NF. In Figure 10 the tables are "
          "grouped under three headings, master data and supply, warehouse and "
          "staff, and orders and movements. A column name is underlined where it "
          "forms part of the primary key and italicised where it is a foreign key, "
          "so a column that is both is underlined and italic.")
-    figure("final_schema.png", "Figure 11. Final relational schema, 21 tables in "
+    figure("final_schema.png", "Figure 10. Final relational schema, 21 tables in "
                                "BCNF")
     h("10.1 Keys of Every Table", 2)
     table(["Table", "Primary key", "Foreign keys"], SCHEMA,
@@ -730,13 +729,19 @@ def build_docx():
         "one row in each subclass table, so neither set of handling rules has to be "
         "copied into the other.",
     ])
-    para("Two tables are worth a second look. WAREHOUSE has two candidate keys, "
+    para("Three tables are worth a second look. WAREHOUSE has two candidate keys, "
          "WarehouseID and ManagerID, because MANAGES is 1:1 and ManagerID is "
          "therefore UNIQUE. Both determinants are candidate keys, so the table is "
          "still in BCNF. GOODS_MOVEMENT, SHIPMENT and GOODS_RETURN each have "
          "MovementID as their only key and no other determinant, which is what "
          "generalization gives for free: the shared columns sit in one table, so "
-         "there is nowhere for a second copy of them to disagree.")
+         "there is nowhere for a second copy of them to disagree. ORDER_ITEM "
+         "reaches the same table by two routes: normalization keys it by "
+         "{OrderID, ProductID} and the weak entity maps it to {OrderID, ItemNo}. "
+         "Both are candidate keys, because a product appears at most once on an "
+         "order, so the table is in BCNF whichever of the two is declared primary. "
+         "The schema declares {OrderID, ItemNo}, to keep the line numbering the "
+         "weak entity was drawn with.")
     para("One trade-off is worth recording. Splitting DELIVERY_DUTY into "
          "DRIVER_CITY and ORDER_DRIVER means F7, {OrderID, City} -> DriverID, can no "
          "longer be checked inside a single table. It will be enforced by a trigger "
@@ -992,13 +997,13 @@ def build_pptx():
         "Not of the supplier, and not of the product, which is why the ER model "
         "needed two separate links and still could not say it.",
         "So the whole SUPPLIER, SUPPLIES, PRODUCT arrangement is boxed and treated "
-        "as one object, and INSPECTION joins the box.",
+        "as one object, and INSPECTION joins the box. It is the rectangle at the top "
+        "left of the EER model.",
         "In tables: the aggregate is the SUPPLIES table, and INSPECTION carries "
         "SupplierID with ProductID as a single foreign key into it.",
         "An inspection therefore cannot name a pair that is not actually supplied.",
     ], subtitle="a relationship treated as one higher-level object")
 
-    image_slide("5. The Aggregation on Its Own", img("eer_aggregation.png"))
 
     table_slide("5. What EER Added, and Why",
                 ["EER feature", "Where"],
@@ -1036,7 +1041,8 @@ def build_pptx():
     ], subtitle="the dependencies drive every split that follows")
 
     image_slide("7. The Sample Rows", img("sample_data.png"),
-                subtitle="ORDER_LINE rows are numbered 1 to 7 from the top")
+                subtitle="ORDER_LINE rows are numbered 1 to 8 from the top, and "
+                         "joining the normalized tables gives them back exactly")
 
     table_slide("7. Dependencies That Hold", ["Ref", "Dependency", "Read off"],
                 [(a, b, d) for a, b, _, d in FD_HOLD], [1.0, 4.0, 7.2], fs=11.5,
@@ -1049,9 +1055,9 @@ def build_pptx():
 
     bullets_slide("7. Candidate Keys", [
         "ORDER_LINE: start from {OrderID, ProductID} and close it.",
-        "  F1 adds OrderDate, Status, CustID. F2 adds CName, Street, City. F3 adds "
-        "State. F4 adds PName, Category, Price. F5 adds Qty.",
-        "  All thirteen columns are reached, and neither half works alone (N1, N2), "
+        "  F1 adds OrderDate, Status, CustID. F2 adds CName, Street, City, "
+        "CustPhone. F3 adds State. F4 adds PName, Category, Price. F5 adds Qty.",
+        "  All fourteen columns are reached, and neither half works alone (N1, N2), "
         "so it is the only candidate key.",
         "DELIVERY_DUTY: two candidate keys, {OrderID, City} by F7 and "
         "{OrderID, DriverID} by F6.",
@@ -1125,9 +1131,8 @@ def build_pptx():
 
 
 if __name__ == "__main__":
-    for f in ["er_model", "eer_model", "eer_aggregation", "sample_data",
-              "norm_unf", "norm_1nf", "norm_2nf", "norm_3nf", "norm_bcnf",
-              "decomp_tree", "final_schema"]:
+    for f in ["er_model", "eer_model", "sample_data", "norm_unf", "norm_1nf",
+              "norm_2nf", "norm_3nf", "norm_bcnf", "decomp_tree", "final_schema"]:
         assert os.path.exists(img(f + ".png")), \
             f"missing {f}.png, run diagrams/make_diagrams.py"
     print("DOCX:", build_docx())

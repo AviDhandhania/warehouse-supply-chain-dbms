@@ -8,14 +8,14 @@ ER / EER model, functional dependency analysis, and normalization up to BCNF.
 
 | File | What it is |
 |---|---|
-| `docs/DA1_Report.docx` | The report — 11 sections, 11 figures |
+| `docs/DA1_Report.docx` | The report — 11 sections, 10 figures |
 | `presentation/DA1_Presentation.pptx` | The deck — 36 slides, 16:9 |
-| `diagrams/*.png` | The 11 figures at full resolution |
+| `diagrams/*.png` | The 10 figures at full resolution |
 
 ## Rebuilding
 
 ```
-cd diagrams && python make_diagrams.py     # writes the 11 PNGs
+cd diagrams && python make_diagrams.py     # writes the 10 PNGs
 cd ..       && python build_deliverables.py # writes the docx and pptx
 ```
 
@@ -45,10 +45,15 @@ three: the letter in the circle (`d` disjoint for EMPLOYEE and GOODS_MOVEMENT,
 the line into the circle (double for total, single for partial), and the subset
 symbol on each subclass line, pointing at the superclass.
 
-Section 7 of the report fills each relation with sample rows (7 in ORDER_LINE, 7 in
+Section 7 of the report fills each relation with sample rows (8 in ORDER_LINE, 7 in
 DELIVERY_DUTY, 5 in SUPPLIER_PHONE) and reads the functional dependencies off them:
 8 that hold (F1–F8) and 8 that the data rules out (N1–N8). Every split in section 8
 is then justified by one of those refs.
+
+The instance is one database, not three unrelated samples: joining ORDERS,
+CUSTOMER, CITY and ORDER_ITEM reproduces the eight ORDER_LINE rows exactly, and
+joining DRIVER_CITY with ORDER_DRIVER reproduces DELIVERY_DUTY. `verify.py` in
+the scratchpad checks that, along with every F and N claim.
 
 The normalization chain does not touch any of the new material, which is why
 `sample_data`, the five `norm_*` figures and `decomp_tree` are unchanged: the
@@ -60,15 +65,14 @@ and the aggregation all land in the other thirteen tables.
 
 1. `er_model` — the whole design as one ER diagram (Chen notation)
 2. `eer_model` — the same design with the EER features added, drawn shaded
-3. `eer_aggregation` — the aggregation alone, so the box round SUPPLIES stays legible
-4. `sample_data` — the rows the dependency analysis is read from
-5. `norm_unf` — the one unnormalized table everything starts from
-6. `norm_1nf` — the relations after 1NF
-7. `norm_2nf` — after 2NF
-8. `norm_3nf` — after 3NF
-9. `norm_bcnf` — after BCNF
-10. `decomp_tree` — UNF → BCNF as a tree, every column at every stage
-11. `final_schema` — all 21 tables with their keys
+3. `sample_data` — the rows the dependency analysis is read from
+4. `norm_unf` — the one unnormalized table everything starts from
+5. `norm_1nf` — the relations after 1NF
+6. `norm_2nf` — after 2NF
+7. `norm_3nf` — after 3NF
+8. `norm_bcnf` — after BCNF
+9. `decomp_tree` — UNF → BCNF as a tree, every column at every stage
+10. `final_schema` — all 21 tables with their keys
 
 Every PNG holds the diagram and nothing else: no titles, captions, legends or
 commentary. All of the reasoning, including the notation legends, lives in the

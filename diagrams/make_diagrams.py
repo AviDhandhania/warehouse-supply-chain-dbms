@@ -1,9 +1,8 @@
 """Generate the DA1 diagrams for the Warehouse & Supply Chain Management System.
 
-Eleven PNGs:
+Ten PNGs:
   er_model      - basic ER model (Chen notation), 9 entities
   eer_model     - the SAME model extended with EER features
-  eer_aggregation - the aggregation on its own, so the box stays readable
   sample_data   - sample rows used to work out the functional dependencies
   norm_unf      - the single unnormalized table we start from
   norm_1nf      - relations after 1NF
@@ -217,45 +216,49 @@ def row_of(ax, y, specs, x0=0.4, gap=0.85):
 # carries at least five rows, which is what makes the dependency check possible.
 
 FLAT_COLS = ["OrderID", "OrderDate", "Status", "CustID", "CName", "Street",
-             "City", "State", "ProductID", "PName", "Category", "Qty", "Price"]
+             "City", "State", "CustPhone", "ProductID", "PName", "Category", "Qty",
+             "Price"]
 FLAT_ROWS = [
     ["O-101", "02-Apr", "SHIPPED", "C-01", "Sharma Retail", "12 MG Rd", "Chennai",
-     "Tamil Nadu", "P-100", "Basmati Rice", "Staples", "20", "480"],
+     "Tamil Nadu", "9840011223", "P-100", "Basmati Rice", "Staples", "20", "480"],
     ["O-101", "02-Apr", "SHIPPED", "C-01", "Sharma Retail", "12 MG Rd", "Chennai",
-     "Tamil Nadu", "P-104", "Sunflower Oil", "Oils", "50", "132"],
+     "Tamil Nadu", "9840011223", "P-104", "Sunflower Oil", "Oils", "50", "132"],
     ["O-102", "05-Apr", "NEW", "C-03", "Metro Mart", "5 Link Rd", "Mumbai",
-     "Maharashtra", "P-210", "Frozen Peas", "Frozen", "30", "96"],
+     "Maharashtra", "9820044556", "P-210", "Frozen Peas", "Frozen", "30", "96"],
     ["O-103", "09-Apr", "SHIPPED", "C-01", "Sharma Retail", "12 MG Rd", "Chennai",
-     "Tamil Nadu", "P-100", "Basmati Rice", "Staples", "15", "480"],
+     "Tamil Nadu", "9840011223", "P-100", "Basmati Rice", "Staples", "15", "480"],
     ["O-104", "11-Apr", "NEW", "C-05", "Anand Stores", "7 Anna Salai", "Chennai",
-     "Tamil Nadu", "P-108", "Sona Masoori", "Staples", "12", "445"],
+     "Tamil Nadu", "9845567788", "P-108", "Sona Masoori", "Staples", "12", "445"],
     ["O-105", "14-Apr", "SHIPPED", "C-03", "Metro Mart", "5 Link Rd", "Mumbai",
-     "Maharashtra", "P-104", "Sunflower Oil", "Oils", "25", "132"],
+     "Maharashtra", "9820044556", "P-104", "Sunflower Oil", "Oils", "25", "132"],
     ["O-105", "14-Apr", "SHIPPED", "C-03", "Metro Mart", "5 Link Rd", "Mumbai",
-     "Maharashtra", "P-210", "Frozen Peas", "Frozen", "40", "96"],
+     "Maharashtra", "9820044556", "P-210", "Frozen Peas", "Frozen", "40", "96"],
+    ["O-106", "16-Apr", "NEW", "C-05", "Anand Stores", "7 Anna Salai", "Chennai",
+     "Tamil Nadu", "9845567788", "P-100", "Basmati Rice", "Staples", "18", "480"],
 ]
-FLAT_W = [1.05, 1.15, 1.15, 0.95, 1.8, 1.4, 1.15, 1.5, 1.2, 1.75, 1.2, 0.7, 0.8]
+FLAT_W = [1.05, 1.15, 1.15, 0.95, 1.8, 1.4, 1.15, 1.5, 1.55, 1.2, 1.75, 1.2, 0.7,
+          0.8]
 
 ORDER_MASTER_ROWS = [
     ["O-101", "02-Apr", "SHIPPED", "C-01", "Sharma Retail", "12 MG Rd", "Chennai",
-     "Tamil Nadu"],
+     "Tamil Nadu", "9840011223"],
     ["O-102", "05-Apr", "NEW", "C-03", "Metro Mart", "5 Link Rd", "Mumbai",
-     "Maharashtra"],
+     "Maharashtra", "9820044556"],
     ["O-103", "09-Apr", "SHIPPED", "C-01", "Sharma Retail", "12 MG Rd", "Chennai",
-     "Tamil Nadu"],
+     "Tamil Nadu", "9840011223"],
     ["O-104", "11-Apr", "NEW", "C-05", "Anand Stores", "7 Anna Salai", "Chennai",
-     "Tamil Nadu"],
+     "Tamil Nadu", "9845567788"],
     ["O-105", "14-Apr", "SHIPPED", "C-03", "Metro Mart", "5 Link Rd", "Mumbai",
-     "Maharashtra"],
+     "Maharashtra", "9820044556"],
     ["O-106", "16-Apr", "NEW", "C-05", "Anand Stores", "7 Anna Salai", "Chennai",
-     "Tamil Nadu"],
+     "Tamil Nadu", "9845567788"],
 ]
 ORDER_MASTER = dict(
     name="ORDER_MASTER",
     cols=["OrderID", "OrderDate", "Status", "CustID", "CName", "Street", "City",
-          "State"],
+          "State", "CustPhone"],
     rows=ORDER_MASTER_ROWS,
-    colw=[1.05, 1.15, 1.15, 0.95, 1.8, 1.4, 1.15, 1.5], keys=(0,))
+    colw=[1.05, 1.15, 1.15, 0.95, 1.8, 1.4, 1.15, 1.5, 1.55], keys=(0,))
 
 ITEM_FULL = dict(
     name="ORDER_ITEM",
@@ -309,11 +312,11 @@ ORDERS = dict(
 
 CUSTOMER = dict(
     name="CUSTOMER",
-    cols=["CustID", "CName", "Street", "City"],
-    rows=[["C-01", "Sharma Retail", "12 MG Rd", "Chennai"],
-          ["C-03", "Metro Mart", "5 Link Rd", "Mumbai"],
-          ["C-05", "Anand Stores", "7 Anna Salai", "Chennai"]],
-    colw=[1.05, 1.9, 1.5, 1.25], keys=(0,), fks=(3,))
+    cols=["CustID", "CName", "Street", "City", "Phone"],
+    rows=[["C-01", "Sharma Retail", "12 MG Rd", "Chennai", "9840011223"],
+          ["C-03", "Metro Mart", "5 Link Rd", "Mumbai", "9820044556"],
+          ["C-05", "Anand Stores", "7 Anna Salai", "Chennai", "9845567788"]],
+    colw=[1.05, 1.9, 1.5, 1.25, 1.55], keys=(0,), fks=(3,))
 
 CITY = dict(
     name="CITY", cols=["City", "State"],
@@ -576,9 +579,11 @@ def eer_model():
     line(ax, (3.45, 2.56), (2.3, BOT - 0.48), lw=0.8, color=GREY)
     attr(ax, 2.3, 1.20, "Address", shaded=True)
     line(ax, (2.3, 1.51), (2.3, 1.94), lw=0.8, color=GREY)
-    for xx, t in [(0.85, "Street"), (2.3, "City"), (3.8, "Pincode")]:
+    for xx, t in [(1.35, "Street"), (3.25, "City")]:
         attr(ax, xx, 0.15, t, h=0.56, fs=7.2, shaded=True)
         line(ax, (xx, 0.43), (2.3, 0.89), lw=0.8, color=GREY)
+    attr(ax, 5.00, 2.25, "Phone")
+    line(ax, (5.00, 2.56), (2.3, BOT - 0.48), lw=0.8, color=GREY)
 
     for xx, yy, t, kw in [(7.05, 2.25, "OrderID", {"key": True}),
                           (9.35, 2.25, "OrderDate", {}),
@@ -611,43 +616,7 @@ def eer_model():
     save(fig, "eer_model")
 
 
-# ========================================================= 3. AGGREGATION
-def eer_aggregation():
-    fig, ax = canvas(14.0, 10.4, y0=0.4)
-
-    entity(ax, 2.7, 7.0, "SUPPLIER", w=2.8)
-    rel(ax, 6.6, 7.0, "SUPPLIES", w=2.6, h=1.15)
-    entity(ax, 10.5, 7.0, "PRODUCT", w=2.8)
-    line(ax, (4.1, 7.0), (5.3, 7.0), "M")
-    line(ax, (7.9, 7.0), (9.1, 7.0), "N")
-
-    attr(ax, 2.7, 8.7, "SupplierID", key=True)
-    line(ax, (2.7, 8.39), (2.7, 7.48), lw=0.8, color=GREY)
-    attr(ax, 10.5, 8.7, "ProductID", key=True)
-    line(ax, (10.5, 8.39), (10.5, 7.48), lw=0.8, color=GREY)
-    attr(ax, 6.6, 8.7, "LeadTimeDays")
-    line(ax, (6.6, 8.39), (6.6, 7.58), lw=0.8, color=GREY)
-
-    # the aggregation itself: the whole triangle treated as one object
-    ax.add_patch(Rectangle((0.9, 6.25), 11.2, 3.05, fc="none", ec=INK, lw=1.5,
-                           zorder=2))
-
-    rel(ax, 6.6, 4.5, "INSPECTED_IN", w=3.0, h=1.15, fs=7.8)
-    line(ax, (6.6, 6.25), (6.6, 5.08), "1")
-    entity(ax, 6.6, 2.6, "INSPECTION", w=3.0)
-    line(ax, (6.6, 3.92), (6.6, 3.08), "N", total=True)
-
-    attr(ax, 3.5, 1.2, "InspID", key=True)
-    line(ax, (3.5, 1.51), (6.6, 2.12), lw=0.8, color=GREY)
-    attr(ax, 6.6, 1.2, "InspDate")
-    line(ax, (6.6, 1.51), (6.6, 2.12), lw=0.8, color=GREY)
-    attr(ax, 9.7, 1.2, "Result")
-    line(ax, (9.7, 1.51), (6.6, 2.12), lw=0.8, color=GREY)
-
-    save(fig, "eer_aggregation")
-
-
-# ====================================================== 4. SAMPLE DATA FOR FDs
+# ====================================================== 3. SAMPLE DATA FOR FDs
 def sample_data():
     fig, ax = canvas(20.0, 9.6, y0=1.0)
 
@@ -660,33 +629,43 @@ def sample_data():
     save(fig, "sample_data")
 
 
-# ============================================================ 5. UNF
+# ============================================================ 4. UNF
 def norm_unf():
     fig, ax = canvas(21.0, 6.0, y0=1.6)
 
     table(ax, 0.4, 6.9, "ORDER_REGISTER   (one row per order)",
           ["OrderID", "OrderDate", "Status", "CustID", "CName", "Street", "City",
-           "State", "SupplierPhones",
+           "State", "CustPhone", "SupplierPhones",
            "Items (ProductID, PName, Category, Qty, Price)",
            "Delivery (DriverID, City)"],
           [["O-101", "02-Apr", "SHIPPED", "C-01", "Sharma Retail", "12 MG Rd",
-            "Chennai", "Tamil Nadu", "9845012345,\n08022334455",
+            "Chennai", "Tamil Nadu", "9840011223", "9845012345,\n08022334455",
             "(P-100, Basmati Rice, Staples, 20, 480)\n"
             "(P-104, Sunflower Oil, Oils, 50, 132)",
             "(D-05, Chennai)\n(D-09, Mumbai)"],
            ["O-102", "05-Apr", "NEW", "C-03", "Metro Mart", "5 Link Rd", "Mumbai",
-            "Maharashtra", "9820011122",
+            "Maharashtra", "9820044556", "9820011122",
             "(P-210, Frozen Peas, Frozen, 30, 96)", "(D-09, Mumbai)"],
+           ["O-103", "09-Apr", "SHIPPED", "C-01", "Sharma Retail", "12 MG Rd",
+            "Chennai", "Tamil Nadu", "9840011223", "9845012345,\n08022334455",
+            "(P-100, Basmati Rice, Staples, 15, 480)", "(D-05, Chennai)"],
            ["O-104", "11-Apr", "NEW", "C-05", "Anand Stores", "7 Anna Salai",
-            "Chennai", "Tamil Nadu", "9840199887,\n04428451212",
-            "(P-108, Sona Masoori, Staples, 12, 445)", "(D-05, Chennai)"]],
-          colw=[1.0, 1.1, 1.1, 0.9, 1.75, 1.4, 1.15, 1.45, 2.3, 5.3, 2.0],
+            "Chennai", "Tamil Nadu", "9845567788", "9840199887,\n04428451212",
+            "(P-108, Sona Masoori, Staples, 12, 445)", "(D-05, Chennai)"],
+           ["O-105", "14-Apr", "SHIPPED", "C-03", "Metro Mart", "5 Link Rd",
+            "Mumbai", "Maharashtra", "9820044556", "9845012345,\n9820011122",
+            "(P-104, Sunflower Oil, Oils, 25, 132)\n"
+            "(P-210, Frozen Peas, Frozen, 40, 96)", "(D-09, Mumbai)"],
+           ["O-106", "16-Apr", "NEW", "C-05", "Anand Stores", "7 Anna Salai",
+            "Chennai", "Tamil Nadu", "9845567788", "9845012345,\n08022334455",
+            "(P-100, Basmati Rice, Staples, 18, 480)", "(D-11, Chennai)"]],
+          colw=[1.0, 1.1, 1.1, 0.9, 1.75, 1.4, 1.15, 1.45, 1.55, 2.3, 5.3, 2.0],
           fs=6.6, hfs=6.8, rh=1.05)
 
     save(fig, "norm_unf")
 
 
-# ============================================================ 6. 1NF
+# ============================================================ 5. 1NF
 def norm_1nf():
     fig, ax = canvas(21.0, 11.0, y0=0.4)
     b = row_of(ax, 10.6, [ORDER_MASTER, DELIVERY_DUTY, SUPPLIER_PHONE])
@@ -694,7 +673,7 @@ def norm_1nf():
     save(fig, "norm_1nf")
 
 
-# ============================================================ 7. 2NF
+# ============================================================ 6. 2NF
 def norm_2nf():
     fig, ax = canvas(21.0, 11.0, y0=0.4)
     b = row_of(ax, 10.6, [ORDER_MASTER, DELIVERY_DUTY, SUPPLIER_PHONE])
@@ -702,7 +681,7 @@ def norm_2nf():
     save(fig, "norm_2nf")
 
 
-# ============================================================ 8. 3NF
+# ============================================================ 7. 3NF
 def norm_3nf():
     fig, ax = canvas(21.0, 11.6, y0=0.4)
     b = row_of(ax, 11.2, [ORDERS, CUSTOMER, CITY, DELIVERY_DUTY])
@@ -710,7 +689,7 @@ def norm_3nf():
     save(fig, "norm_3nf")
 
 
-# ============================================================ 9. BCNF
+# ============================================================ 8. BCNF
 def norm_bcnf():
     fig, ax = canvas(21.0, 11.6, y0=0.4)
     b = row_of(ax, 11.2, [ORDERS, CUSTOMER, CITY, DRIVER_CITY])
@@ -718,18 +697,19 @@ def norm_bcnf():
     save(fig, "norm_bcnf")
 
 
-# ================================================ 10. DECOMPOSITION TREE
+# ================================================= 9. DECOMPOSITION TREE
 # (name, columns, parent name in the previous stage, key)
 TREE = [
     ("UNF", [
         ("ORDER_REGISTER",
          ["OrderID", "OrderDate", "Status", "CustID", "CName", "Street", "City",
-          "State", "SupplierPhones *", "Items *", "Delivery *"], None,
+          "State", "CustPhone", "SupplierPhones *", "Items *", "Delivery *"], None,
          "no atomic key yet   (* = repeating group)"),
     ]),
     ("1NF", [
         ("ORDER_MASTER", ["OrderID", "OrderDate", "Status", "CustID", "CName",
-                          "Street", "City", "State"], "ORDER_REGISTER", "OrderID"),
+                          "Street", "City", "State", "CustPhone"],
+         "ORDER_REGISTER", "OrderID"),
         ("ORDER_ITEM", ["OrderID", "ProductID", "PName", "Category", "Qty",
                         "Price"], "ORDER_REGISTER", "OrderID + ProductID"),
         ("SUPPLIER_PHONE", ["SupplierID", "Phone"], "ORDER_REGISTER",
@@ -739,7 +719,8 @@ TREE = [
     ]),
     ("2NF", [
         ("ORDER_MASTER", ["OrderID", "OrderDate", "Status", "CustID", "CName",
-                          "Street", "City", "State"], "ORDER_MASTER", "OrderID"),
+                          "Street", "City", "State", "CustPhone"], "ORDER_MASTER",
+         "OrderID"),
         ("ORDER_ITEM", ["OrderID", "ProductID", "Qty"], "ORDER_ITEM",
          "OrderID + ProductID"),
         ("PRODUCT", ["ProductID", "PName", "Category", "UnitPrice"], "ORDER_ITEM",
@@ -752,8 +733,8 @@ TREE = [
     ("3NF", [
         ("ORDERS", ["OrderID", "OrderDate", "Status", "CustID"], "ORDER_MASTER",
          "OrderID"),
-        ("CUSTOMER", ["CustID", "CName", "Street", "City"], "ORDER_MASTER",
-         "CustID"),
+        ("CUSTOMER", ["CustID", "CName", "Street", "City", "Phone"],
+         "ORDER_MASTER", "CustID"),
         ("CITY", ["City", "State"], "ORDER_MASTER", "City"),
         ("ORDER_ITEM", ["OrderID", "ProductID", "Qty"], "ORDER_ITEM",
          "OrderID + ProductID"),
@@ -767,7 +748,8 @@ TREE = [
     ("BCNF", [
         ("ORDERS", ["OrderID", "OrderDate", "Status", "CustID"], "ORDERS",
          "OrderID"),
-        ("CUSTOMER", ["CustID", "CName", "Street", "City"], "CUSTOMER", "CustID"),
+        ("CUSTOMER", ["CustID", "CName", "Street", "City", "Phone"], "CUSTOMER",
+         "CustID"),
         ("CITY", ["City", "State"], "CITY", "City"),
         ("ORDER_ITEM", ["OrderID", "ProductID", "Qty"], "ORDER_ITEM",
          "OrderID + ProductID"),
@@ -840,7 +822,7 @@ def decomp_tree():
     save(fig, "decomp_tree")
 
 
-# =========================================================== 11. FINAL SCHEMA
+# ============================================================ 10. FINAL SCHEMA
 def final_schema():
     fig, ax = canvas(20.4, 11.4, y0=1.2)
 
@@ -854,7 +836,7 @@ def final_schema():
              (0,), (0,)),
             ("HAZARDOUS_PRODUCT", ["ProductID", "HazardClass", "HandlingNote"],
              (0,), (0,)),
-            ("SUPPLIES", ["SupplierID", "ProductID", "LeadTimeDays", "SupplyPrice"],
+            ("SUPPLIES", ["SupplierID", "ProductID", "LeadTimeDays"],
              (0, 1), (0, 1)),
             ("INSPECTION", ["InspID", "SupplierID", "ProductID", "InspDate",
                             "Result"], (0,), (1, 2)),
@@ -875,10 +857,9 @@ def final_schema():
             ("ORDER_ITEM", ["OrderID", "ItemNo", "ProductID", "Qty"], (0, 1),
              (0, 2)),
             ("ORDER_DRIVER", ["OrderID", "DriverID"], (0, 1), (0, 1)),
-            ("GOODS_MOVEMENT", ["MovementID", "OrderID", "MoveDate", "Status"],
-             (0,), (1,)),
-            ("SHIPMENT", ["MovementID", "WarehouseID", "DeliveryDate"], (0,),
-             (0, 1)),
+            ("GOODS_MOVEMENT", ["MovementID", "OrderID", "WarehouseID",
+                                "MoveDate", "Status"], (0,), (1, 2)),
+            ("SHIPMENT", ["MovementID", "DeliveryDate"], (0,), (0,)),
             ("GOODS_RETURN", ["MovementID", "Reason", "RefundAmt"], (0,), (0,)),
         ]),
     ]
@@ -913,8 +894,8 @@ def final_schema():
     save(fig, "final_schema")
 
 
-FIGURES = [er_model, eer_model, eer_aggregation, sample_data, norm_unf,
-           norm_1nf, norm_2nf, norm_3nf, norm_bcnf, decomp_tree, final_schema]
+FIGURES = [er_model, eer_model, sample_data, norm_unf, norm_1nf, norm_2nf,
+           norm_3nf, norm_bcnf, decomp_tree, final_schema]
 NAMES = [f.__name__ for f in FIGURES]
 
 if __name__ == "__main__":
